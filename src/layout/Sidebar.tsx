@@ -8,7 +8,7 @@ import changeLog from '../../CHANGELOG.md?raw';
 
 import SettingsModal from '@src/components/modals/SettingsModal';
 import { updateSettings, useSettings } from '@src/store';
-import { HandCoins, Puzzle, Settings } from 'lucide-react';
+import { Globe, HandCoins, Puzzle, Settings } from 'lucide-react';
 import {
   ArioLogoIcon,
   BinocularsIcon,
@@ -52,6 +52,11 @@ const ROUTES_PRIMARY = [
     title: 'Extensions',
     icon: <Puzzle className="size-4" />,
     path: '/extensions',
+  },
+  {
+    title: 'Atlas',
+    icon: <Globe className="size-4" />,
+    path: '/atlas',
   },
 ];
 

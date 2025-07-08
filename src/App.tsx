@@ -32,6 +32,7 @@ const BalancesForAddress = React.lazy(
   () => import('./pages/Balances/BalancesForAddress'),
 );
 const Extensions = React.lazy(() => import('./pages/Extensions/Extensions'));
+const Atlas = React.lazy(() => import('./pages/Atlas'));
 
 // Sub-Pages
 const Reports = React.lazy(() => import('./pages/Reports'));
@@ -156,6 +157,15 @@ function App() {
           element={
             <Suspense fallback={<Loading />}>
               <Extensions />
+            </Suspense>
+          }
+        />
+        ,
+        <Route
+          path="atlas"
+          element={
+            <Suspense fallback={<Loading />}>
+              <Atlas />
             </Suspense>
           }
         />
