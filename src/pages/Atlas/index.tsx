@@ -2,8 +2,10 @@ import type { CellContext, ColumnDef } from '@tanstack/react-table';
 
 import { mARIOToken } from '@ar.io/sdk/web';
 import { createColumnHelper } from '@tanstack/react-table';
+import * as dns from 'dns-query'
 import { useEffect, useMemo, useState } from 'react';
 
+import Button, { ButtonType } from '@src/components/Button';
 import CopyButton from '@src/components/CopyButton';
 import Header from '@src/components/Header';
 import TableView from '@src/components/TableView';
@@ -17,6 +19,8 @@ interface RowData {
   operatorStake: number;
   delegatedStake: number;
   totalStake: number;
+  supportsIPv4?: boolean;
+  supportsIPv6?: boolean;
 }
 
 const STAKE_FORMAT = new Intl.NumberFormat('en-US', {
@@ -29,6 +33,22 @@ const formatStake = (stake: number) => {
 }
 const renderStake = (ctx: CellContext<RowData, number>) => {
   return <>{ formatStake(ctx.getValue()) }</>;
+}
+
+const queryDns = async (domain: string, recordType: string) : Promise<Array<unknown>> => {
+  const { answers = [] } = await dns.query(
+    {
+      question: {
+        name: domain,
+        type: recordType,
+      },
+    },
+    {
+      // TODO: make endpoint editable in SettingsModal?
+      endpoints: ['https://dns.google:443/dns-query'],
+    }
+  );
+  return answers;
 }
 
 const columnHelper = createColumnHelper<RowData>();
@@ -83,6 +103,67 @@ const Atlas = () => {
         header: 'Total Stake',
         sortDescFirst: true,
         cell: renderStake,
+      }),
+      columnHelper.display({
+        id: 'query',
+        cell: (ctx) => (
+          <Button
+            className="w-fit"
+            active={true}
+            buttonType={ButtonType.PRIMARY}
+            title="Query"
+            text="Query"
+            onClick={async () => {
+              const { domain } = ctx.row.original;
+              const [
+                aRecords,
+                aaaaRecords,
+              ] = await Promise.all([
+                queryDns(domain, 'A'),
+                queryDns(domain, 'AAAA'),
+              ]);
+              setTableData(oldTableData => {
+                const newTableData = oldTableData.map(oldRow => {
+                  const newRow = Object.assign({}, oldRow);
+                  if (newRow.domain === domain) {
+                    newRow.supportsIPv4 = !!aRecords.length;
+                    newRow.supportsIPv6 = !!aaaaRecords.length;
+                  }
+                  return newRow;
+                });
+                return newTableData;
+              });
+            }}
+          />
+        )
+      }),
+      columnHelper.accessor('supportsIPv4', {
+        id: 'supportsIPv4',
+        header: 'IPv4?',
+        cell: (ctx) => {
+          const supportsIPv4 = ctx.getValue()
+          if (supportsIPv4 === true) {
+            return '✅';
+          }
+          if (supportsIPv4 === false) {
+            return '❌';
+          }
+          return '❔';
+        },
+      }),
+      columnHelper.accessor('supportsIPv6', {
+        id: 'supportsIPv6',
+        header: 'IPv6?',
+        cell: (ctx) => {
+          const supportsIPv6 = ctx.getValue()
+          if (supportsIPv6 === true) {
+            return '✅';
+          }
+          if (supportsIPv6 === false) {
+            return '❌';
+          }
+          return '❔';
+        },
       }),
       columnHelper.display({
         id: 'latency',
